@@ -57,7 +57,7 @@ def shortenURL(url):
     # url += str(time.time())
     # id = base64.b64encode(url.encode()).decode()
     # return id[-6:]
-    hs = HailStone(1)
+    global hs
     return hs.generate()
 
 def checkURLValidity(url):
@@ -68,6 +68,7 @@ def checkURLValidity(url):
 
 
 if __name__ == '__main__':
+    hs = HailStone(1)
     app.run(port=8000)
     
     
