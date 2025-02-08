@@ -14,23 +14,24 @@ class HailStone:
         self.start_time = start_time
         self.sequence = 0
         self.last_timestamp = -1
-
+        self.lock = threading.Lock()
         self._base62_alphabet = string.digits + string.ascii_letters
 
     def fakesnow(self):
         # it is a simple version of snowflake algorithm
 
         time_now = int(time.time() * 1000) - self.start_time
-
-        # incremental sequence number in a single millisecond
-        if(time_now == self.last_timestamp):
-            self.sequence += 1
-        else:
-            self.sequence = 0
-            self.last_timestamp = time_now
         
-        # 41 bits for time, 10 bits for machine id, 5 bits for sequence
-        return (time_now << 15) | (self.machine_id << 5) | self.sequence
+        with self.lock:
+            # incremental sequence number in a single millisecond
+            if(time_now == self.last_timestamp):
+                self.sequence += 1
+            else:
+                self.sequence = 0
+                self.last_timestamp = time_now
+            
+            # 41 bits for time, 10 bits for machine id, 5 bits for sequence
+            return (time_now << 15) | (self.machine_id << 5) | self.sequence
 
     def _base62(self, num):
         # encode the number to base62
