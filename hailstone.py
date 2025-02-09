@@ -20,9 +20,14 @@ class HailStone:
     def fakesnow(self):
         # it is a simple version of snowflake algorithm
 
-        time_now = int(time.time() * 1000) - self.start_time
         
         with self.lock:
+            time_now = int(time.time() * 1000) - self.start_time
+            
+            # if the sequence number is overflow, wait for the next millisecond
+            while time_now == self.last_timestamp and self.sequence >= 31:
+                time_now = self._current_timestamp()
+
             # incremental sequence number in a single millisecond
             if(time_now == self.last_timestamp):
                 self.sequence += 1
@@ -30,8 +35,8 @@ class HailStone:
                 self.sequence = 0
                 self.last_timestamp = time_now
             
-            # 41 bits for time, 10 bits for machine id, 5 bits for sequence
-            return (time_now << 15) | (self.machine_id << 5) | self.sequence
+            # leading bits for time, 5 bits for machine id, 5 bits for sequence
+            return (time_now << 10) | (self.machine_id << 5) | self.sequence
 
     def _base62(self, num):
         # encode the number to base62
