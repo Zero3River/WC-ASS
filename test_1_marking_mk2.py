@@ -94,7 +94,7 @@ class TestApi(unittest.TestCase):
         not_existing_id = self.not_existing_id
         invalid_url = self.invalid_url
 
-        print("puttttttt")
+        # print("puttttttt")
 
         endpoint = "/"
         print(f"{self.base_url}{endpoint}{id}"   )
