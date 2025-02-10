@@ -1,8 +1,7 @@
 from flask import Flask, request, jsonify, Response
-import base64
-import time
 from hailstone import HailStone
 import re
+
 app = Flask(__name__)
 url_dict = {}
 
@@ -68,7 +67,7 @@ def checkURLValidity(url):
 
 
 if __name__ == '__main__':
-    hs = HailStone(1)
+    hs = HailStone(0)
     app.run(port=8000)
     
     
