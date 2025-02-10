@@ -3,7 +3,7 @@ import string
 import threading
 
 class HailStone:
-    def __init__(self, machine_id, start_time=1738851309614):
+    def __init__(self, machine_id, start_time=1738851309614, len_machine_id=5, len_sequence=5):
         """
             a simple version of snowflake algorithm, and convert to base62
             args:
@@ -17,6 +17,9 @@ class HailStone:
         self.lock = threading.Lock()
         self._base62_alphabet = string.digits + string.ascii_letters
 
+        self.len_machine_id = len_machine_id
+        self.len_sequence = len_sequence
+
     def fakesnow(self):
         # it is a simple version of snowflake algorithm
 
@@ -25,7 +28,7 @@ class HailStone:
             time_now = int(time.time() * 1000) - self.start_time
             
             # if the sequence number is overflow, wait for the next millisecond
-            while time_now == self.last_timestamp and self.sequence >= 31:
+            while time_now == self.last_timestamp and self.sequence >= 2 ** self.len_sequence - 1:
                 time_now = self._current_timestamp()
 
             # incremental sequence number in a single millisecond
@@ -36,7 +39,7 @@ class HailStone:
                 self.last_timestamp = time_now
             
             # leading bits for time, 5 bits for machine id, 5 bits for sequence
-            return (time_now << 10) | (self.machine_id << 5) | self.sequence
+            return (time_now << self.len_machine_id+self.len_sequence) | (self.machine_id << self.len_sequence) | self.sequence
 
     def _base62(self, num):
         # encode the number to base62
