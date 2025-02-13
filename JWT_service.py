@@ -56,7 +56,7 @@ def validate():
     token = request.headers.get('Authorization')
     if not token:
         return jsonify({"valid": False, "error": "Token missing"}), 401
-    token = token.split()[1]
+    token = token.removeprefix("Bearer ")
     user_data = verify_token(token)
     if not user_data:
         return jsonify({"valid": False, "error": "Token expired"}), 401
