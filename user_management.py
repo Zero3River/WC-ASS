@@ -1,8 +1,10 @@
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify
 import bcrypt
+import requests
 
 app = Flask(__name__)
 
+jwt_server = "http://127.0.0.1:8002/auth"
 users = {}
 
 @app.route('/users', methods=['POST'])
@@ -41,7 +43,9 @@ def user_login():
         return jsonify({"error": "Username not found"}), 403
     else:
         if bcrypt.checkpw(user['password'].encode(), users[username]):
-            return jsonify({"message": "Login successful", "token": "PLACEHOLDER"}), 200
+            jwt_request = requests.post(f"{jwt_server}", json={'username': username}).json()
+            token = jwt_request.get('token')
+            return jsonify({"message": "Login successful", "token": token}), 200
         else:
             return jsonify({"error": "Incorrect password"}), 403
     
