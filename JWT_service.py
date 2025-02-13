@@ -60,7 +60,18 @@ def validate():
     user_data = verify_token(token)
     if not user_data:
         return jsonify({"valid": False, "error": "Token expired"}), 401
-    return jsonify({"valid": True, "username": user_data["username"]})
+    return jsonify({"valid": True, "username": user_data["username"]}), 200
+
+@app.route('/auth/logout', methods=['PUT'])
+def logout():
+    token = request.headers.get('Authorization')
+    if not token:
+        return jsonify({"message": "Token required"}), 400
+    token = token.split()[1]
+    
+    blacklist.add(token)
+
+    return jsonify({"message": "Successfully logged out"}), 200
 
 
 # Black list
