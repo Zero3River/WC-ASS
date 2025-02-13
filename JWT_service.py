@@ -67,7 +67,7 @@ def logout():
     token = request.headers.get('Authorization')
     if not token:
         return jsonify({"message": "Token required"}), 400
-    token = token.split()[1]
+    token = token.removeprefix("Bearer ")
     
     blacklist.add(token)
 
