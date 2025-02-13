@@ -13,6 +13,7 @@ load_dotenv()
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+blacklist = set()
 
 def create_token(username):
     header = base64.urlsafe_b64encode(b'{"alg":"HS256","typ":"JWT"}').decode('utf-8').rstrip("=")
@@ -24,6 +25,8 @@ def create_token(username):
 
 def verify_token(token):
     try:
+        if token in blacklist:
+            return None
         header, payload, signature = token.split('.')
         padding_needed = 4 - (len(payload) % 4) if len(payload) % 4 else 0
         
@@ -58,6 +61,7 @@ def validate():
     if not user_data:
         return jsonify({"valid": False, "error": "Token expired"}), 401
     return jsonify({"valid": True, "username": user_data["username"]})
+
 
 # Black list
 if __name__ == '__main__':
