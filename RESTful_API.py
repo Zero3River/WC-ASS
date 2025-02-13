@@ -1,12 +1,32 @@
 from flask import Flask, request, jsonify, Response
 from hailstone import HailStone
+import requests
 import re
 
 app = Flask(__name__)
-url_dict = {}
+
+user_url_dict = {}  # Stores user-specific shortened URLs
+
+# JWT Authentication, get username from JWT token
+def jwt_auth_user(headers):
+    jwt_server = "http://127.0.0.1:8002/auth/validate"
+    #TODO Fix this part
+    response = requests.post(url=jwt_server, headers=headers)
+    if response.status_code != 200:
+        return None  # Authentication failed
+    
+    return response.json().get("username")
 
 @app.route('/<id>', methods=['GET'])
 def getURL(id):
+    headers = request.headers
+    username = jwt_auth_user(headers)
+
+    if username is None:
+        return jsonify({"error": "Forbidden"}), 403
+
+    url_dict = user_url_dict.get(username, {})
+    
     if id in url_dict:
         return jsonify({"value": url_dict[id]}), 301
     else:
@@ -14,60 +34,97 @@ def getURL(id):
 
 @app.route('/<id>', methods=['PUT'])
 def updateURL(id):
-    url = request.get_json(force=True)['url']
-    
-    if id in url_dict:
-        if not checkURLValidity(url):
-            return jsonify({"error": "Invalid URL"}), 400
-        url_dict[id] = url
-        return jsonify({"message": "Updated successfully"}), 200
-    elif id not in url_dict:
+    headers = request.headers
+    username = jwt_auth_user(headers)
+
+    if username is None:
+        return jsonify({"error": "Forbidden"}), 403
+
+    url_dict = user_url_dict.get(username)
+
+    if url_dict is None:
         return jsonify({"error": "ID not found"}), 404
+
+    url = request.get_json(force=True).get('url')
+
+    if not url or not checkURLValidity(url):
+        return jsonify({"error": "Invalid URL"}), 400
+
+    url_dict[id] = url
+    return jsonify({"message": "Updated successfully"}), 200
 
 @app.route('/<id>', methods=['DELETE'])
 def deleteURL(id):
+    headers = request.headers
+    username = jwt_auth_user(headers)
+
+    if username is None:
+        return jsonify({"error": "Forbidden"}), 403
+
+    url_dict = user_url_dict.get(username, {})
+
     if id in url_dict:
-        url_dict.pop(id)
+        del url_dict[id]
         return Response(status=204)
-    else:
-        return jsonify({"error": "ID not found"}), 404
+    
+    return jsonify({"error": "ID not found"}), 404
 
 @app.route('/', methods=['GET'])
 def getURLs():
+    headers = request.headers
+    username = jwt_auth_user(headers)
+
+    if username is None:
+        return jsonify({"error": "Forbidden"}), 403
+
+    url_dict = user_url_dict.get(username, {})
     return jsonify({"keys": list(url_dict.keys())}), 200
 
 @app.route('/', methods=['POST'])
 def putURL():
-    url = request.get_json()['value']
-    if url is None or url == "" or not checkURLValidity(url):
+    headers = request.headers
+    
+    username = jwt_auth_user(headers)
+
+    if username is None:
+        return jsonify({"error": "Forbidden"}), 403
+
+    url = request.get_json().get('value')
+
+    if not url or not checkURLValidity(url):
         return jsonify({"error": "Invalid URL"}), 400
-    else:
-        id = shortenURL(url)
-        url_dict[id] = url
-        return jsonify({"id": id}), 201
+
+    id = shortenURL(url)
+
+    # Ensure the user has an entry in user_url_dict
+    if username not in user_url_dict:
+        user_url_dict[username] = {}
+
+    user_url_dict[username][id] = url
+
+    return jsonify({"id": id}), 201
 
 @app.route('/', methods=['DELETE'])
 def deleteAll():
-    url_dict.clear()
-    return Response(status=404)
+    headers = request.headers
+    username = jwt_auth_user(headers)
 
+    if username is None:
+        return jsonify({"error": "Forbidden"}), 403
+
+    if username in user_url_dict:
+        user_url_dict[username].clear()
+
+    return Response(status=204)  # Changed from 404 to 204 No Content
 
 def shortenURL(url):
-    # url += str(time.time())
-    # id = base64.b64encode(url.encode()).decode()
-    # return id[-6:]
     global hs
     return hs.generate()
 
 def checkURLValidity(url):
-    # urlRegx = r"(http|https)://[a-zA-Z0-9\./]+"
-    urlRegx = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
-    # https://stackoverflow.com/questions/3809401/what-is-a-good-regular-expression-to-match-a-url
-    return re.match(urlRegx, url)
-
+    url_regex = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+    return re.match(url_regex, url)
 
 if __name__ == '__main__':
     hs = HailStone(0)
     app.run(port=8000)
-    
-    
