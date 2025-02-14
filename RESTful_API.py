@@ -42,7 +42,7 @@ def updateURL(id):
 
     url_dict = user_url_dict.get(username)
 
-    if url_dict is None:
+    if url_dict is None or id not in url_dict:
         return jsonify({"error": "ID not found"}), 404
 
     url = request.get_json(force=True).get('url')
@@ -77,7 +77,7 @@ def getURLs():
     if username is None:
         return jsonify({"error": "Forbidden"}), 403
 
-    url_dict = user_url_dict.get(username, {})
+    url_dict = user_url_dict.get(username)
     return jsonify({"keys": list(url_dict.keys())}), 200
 
 @app.route('/', methods=['POST'])
@@ -96,7 +96,6 @@ def putURL():
 
     id = shortenURL(url)
 
-    # Ensure the user has an entry in user_url_dict
     if username not in user_url_dict:
         user_url_dict[username] = {}
 
@@ -115,7 +114,7 @@ def deleteAll():
     if username in user_url_dict:
         user_url_dict[username].clear()
 
-    return Response(status=204)  # Changed from 404 to 204 No Content
+    return Response(status=404)
 
 def shortenURL(url):
     global hs
