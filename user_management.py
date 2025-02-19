@@ -61,13 +61,13 @@ def user_update_pwd():
         return jsonify({"error": "Username not found"}), 403
     else:
         if bcrypt.checkpw(user['password'].encode(), users[username]):
-            # logout the user when password is updated
-            token = request.headers.get('Authorization')
-            if not token:
-                return jsonify({"message": "Token required"}), 400
-            jwt_request = requests.put(f"{jwt_server}/logout", headers={'Authorization': token})
-            if jwt_request.status_code != 200:
-                return jsonify({"error": "Invalid token"}), 403
+            # # logout the user when password is updated
+            # token = request.headers.get('Authorization')
+            # if not token:
+            #     return jsonify({"message": "Token required"}), 400
+            # jwt_request = requests.put(f"{jwt_server}/logout", headers={'Authorization': token})
+            # if jwt_request.status_code != 200:
+            #     return jsonify({"error": "Invalid token"}), 403
             # update password
             users[username] = bcrypt.hashpw(user['new_password'].encode(), bcrypt.gensalt())
             
@@ -91,17 +91,17 @@ def user_logout():
         return jsonify({"error": "Invalid token"}), 403
 
 
-@app.route('/users/logged_in', methods=['POST'])
-def user_isLogin():
-    print("AAAA")
-    token = request.headers.get('Authorization')
-    if not token:
-        return jsonify({"message": "Token required"}), 400
-    jwt_request = requests.post(f"{jwt_server}/validate", headers={'Authorization': token})
-    if jwt_request.status_code == 200:
-        return jsonify({"message": "User is logged in"}), 200
-    else:
-        return jsonify({"error": "Invalid token"}), 403
+# @app.route('/users/logged_in', methods=['POST'])
+# def user_isLogin():
+#     print("AAAA")
+#     token = request.headers.get('Authorization')
+#     if not token:
+#         return jsonify({"message": "Token required"}), 400
+#     jwt_request = requests.post(f"{jwt_server}/validate", headers={'Authorization': token})
+#     if jwt_request.status_code == 200:
+#         return jsonify({"message": "User is logged in"}), 200
+#     else:
+#         return jsonify({"error": "Invalid token"}), 403
     
 
 if __name__ == '__main__':
