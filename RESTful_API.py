@@ -10,7 +10,6 @@ user_url_dict = {}  # Stores user-specific shortened URLs
 # JWT Authentication, get username from JWT token
 def jwt_auth_user(headers):
     jwt_server = "http://127.0.0.1:8002/auth/validate"
-    #TODO Fix this part
     response = requests.post(url=jwt_server, headers=headers)
     if response.status_code != 200:
         return None  # Authentication failed
