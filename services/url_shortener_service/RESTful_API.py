@@ -2,10 +2,12 @@ from flask import Flask, request, jsonify, Response
 from hailstone import HailStone
 import requests
 import re
+import redis
 
 app = Flask(__name__)
 
-user_url_dict = {}  # Stores user-specific shortened URLs
+user_url_data = redis.StrictRedis(host='an-pan.me',port=6379, db=0) # change the ip later
+user_id_map = redis.StrictRedis(host='an-pan.me',port=6379, db=1) # change the ip later
 
 # JWT Authentication, get username from JWT token
 def jwt_auth_user(headers):
@@ -24,10 +26,15 @@ def getURL(id):
     if username is None:
         return jsonify({"error": "Forbidden"}), 403
 
-    url_dict = user_url_dict.get(username, {})
+    url_info = user_url_data.hgetall(id)
     
-    if id in url_dict:
-        return jsonify({"value": url_dict[id]}), 301
+    if url_info:
+        stored_username = url_info.get(b'username').decode()
+        long_url = url_info.get(b'long_url').decode()
+        if username == stored_username:
+            return jsonify({"value": long_url}), 301
+        else:
+            return jsonify({"error": "Forbidden"}), 403
     else:
         return jsonify({"error": "ID not found"}), 404
 
@@ -38,18 +45,22 @@ def updateURL(id):
 
     if username is None:
         return jsonify({"error": "Forbidden"}), 403
-
-    url_dict = user_url_dict.get(username)
-
-    if url_dict is None or id not in url_dict:
+    
+    url_info = user_url_data.hgetall(id)
+    stored_username = url_info.get(b'username').decode()
+    
+    if url_info is None:
         return jsonify({"error": "ID not found"}), 404
 
     url = request.get_json(force=True).get('url')
 
     if not url or not checkURLValidity(url):
         return jsonify({"error": "Invalid URL"}), 400
+    elif username != stored_username:
+        return jsonify({"error": "Forbidden"}), 403
+    
+    user_url_data.hset(id, "long_url", url)
 
-    url_dict[id] = url
     return jsonify({"message": "Updated successfully"}), 200
 
 @app.route('/<id>', methods=['DELETE'])
@@ -59,25 +70,30 @@ def deleteURL(id):
 
     if username is None:
         return jsonify({"error": "Forbidden"}), 403
-
-    url_dict = user_url_dict.get(username, {})
-
-    if id in url_dict:
-        del url_dict[id]
-        return Response(status=204)
     
-    return jsonify({"error": "ID not found"}), 404
+    urlinfo = user_url_data.hgetall(id)
+    
+    if urlinfo is None:
+        return jsonify({"error": "ID not found"}), 404
+
+    stored_username = urlinfo.get(b'username').decode()
+    
+    if username != stored_username:
+        return jsonify({"error": "Forbidden"}), 403
+
+    user_url_data.delete(id)
+    return Response(status=204)
 
 @app.route('/', methods=['GET'])
 def getURLs():
     headers = request.headers
     username = jwt_auth_user(headers)
-
+    user_urls = user_id_map.smembers(username)
+    
     if username is None:
         return jsonify({"error": "Forbidden"}), 403
 
-    url_dict = user_url_dict.get(username)
-    return jsonify({"keys": list(url_dict.keys())}), 200
+    return jsonify({"keys": [element.decode() for element in user_urls]}), 200
 
 @app.route('/', methods=['POST'])
 def putURL():
@@ -95,10 +111,8 @@ def putURL():
 
     id = shortenURL(url)
 
-    if username not in user_url_dict:
-        user_url_dict[username] = {}
-
-    user_url_dict[username][id] = url
+    user_url_data.hset(id, mapping={"username": username, "long_url": url})
+    user_id_map.sadd(username, id)
 
     return jsonify({"id": id}), 201
 
@@ -110,8 +124,7 @@ def deleteAll():
     if username is None:
         return jsonify({"error": "Forbidden"}), 403
 
-    if username in user_url_dict:
-        user_url_dict[username].clear()
+    deleteAllUrl(username)
 
     return Response(status=404)
 
@@ -122,6 +135,14 @@ def shortenURL(url):
 def checkURLValidity(url):
     url_regex = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
     return re.match(url_regex, url)
+
+def deleteAllUrl(username):
+    user_ids = user_id_map.smembers(username)
+    if user_ids is None:
+        return
+    for id in user_ids:
+        user_url_data.delete(id.decode())
+    user_id_map.delete(username)
 
 if __name__ == '__main__':
     hs = HailStone(0)
