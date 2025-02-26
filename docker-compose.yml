@@ -40,6 +40,8 @@ services:
       - ./services/url_shortener_service:/app  # Ensure correct volume mapping
     environment:
       - FLASK_ENV=development
+      - JWT_SERVER=http://jwt_service:8002/auth
+
     restart: always
 
   mysql:
