@@ -5,8 +5,8 @@ services:
     build:
       context: ./services/jwt_service
       dockerfile: Dockerfile
-    ports:
-      - 8002:8002
+    # ports:
+    #   - 8002:8002
     environment:
       - SECRET_KEY=${SECRET_KEY}
       - REDIS_HOST=redis
@@ -20,8 +20,8 @@ services:
 
   redis:
     image: redis/redis-stack:latest
-    ports:
-      - 6379:6379
+    # ports:
+    #   - 6379:6379
       # - 8001:8001
     environment:
       - REDIS_ARGS=--requirepass ${REDIS_PASSWORD}
@@ -34,8 +34,8 @@ services:
     build:
       context: ./services/url_shortener_service
       dockerfile: Dockerfile
-    ports:
-      - "8000:8000"
+    # ports:
+    #   - "8000:8000"
     volumes:
       - ./services/url_shortener_service:/app  # Ensure correct volume mapping
     environment:
@@ -57,7 +57,7 @@ services:
       - mysql_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql  
 
-  user_mmanagement:
+  user_management:
     build:
       context: ./services/user_management_service
       dockerfile: Dockerfile
@@ -71,8 +71,19 @@ services:
       MYSQL_DB: ${MYSQL_DB}
       MYSQL_PORT: 3306
       JWT_SERVER: http://jwt_service:8002/auth
+    # ports:
+    #   - "8001:8001"
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx_proxy
     ports:
-      - "8001:8001"
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - user_management
+      - url_shortener
 
   
 volumes:
