@@ -22,7 +22,7 @@ services:
     image: redis/redis-stack:latest
     ports:
       - 6379:6379
-      - 8001:8001
+      # - 8001:8001
     environment:
       - REDIS_ARGS=--requirepass ${REDIS_PASSWORD}
     volumes:
@@ -41,7 +41,43 @@ services:
     environment:
       - FLASK_ENV=development
     restart: always
-    
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  
+  # Flask App Service
+
+  user_mmanagement:
+    build:
+      context: ./services/user_management_service
+      dockerfile: Dockerfile
+    container_name: user_mmanagement
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DB: mydb
+      MYSQL_PORT: 3306
+      JWT_SERVER: http://jwt_service:8002/auth
+    ports:
+      - "8001:8000"
+
+
+  
 volumes:
   redis_data:
+    driver: local
+  mysql_data:
     driver: local
