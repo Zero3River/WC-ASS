@@ -146,4 +146,4 @@ def deleteAllUrl(username):
 
 if __name__ == '__main__':
     hs = HailStone(0)
-    app.run(port=8000)
+    app.run(port=8000, host="0.0.0.0")

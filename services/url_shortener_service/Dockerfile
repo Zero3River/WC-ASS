@@ -2,18 +2,18 @@
 FROM python:3.12-slim
 
 # Set the working directory in the container
-WORKDIR /url_shortener_service
+WORKDIR /app
 
-# Copy the dependencies file to the working directory
+# Copy the dependencies file
 COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy the content of the local src directory to the working directory
+# Copy the rest of the app files
 COPY . .
 
-# Expose the port 8000 for Flask to run on
+# Expose port 8000 for Flask
 EXPOSE 8000
 
 # Command to run on container start
