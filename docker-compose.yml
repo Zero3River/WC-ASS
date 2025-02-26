@@ -44,40 +44,36 @@ services:
 
   mysql:
     image: mysql:8.0
-    container_name: mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: mydb
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql  
-  # Flask App Service
 
   user_mmanagement:
     build:
       context: ./services/user_management_service
       dockerfile: Dockerfile
-    container_name: user_mmanagement
     restart: always
     depends_on:
       - mysql
     environment:
       MYSQL_HOST: mysql
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
-      MYSQL_DB: mydb
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DB: ${MYSQL_DB}
       MYSQL_PORT: 3306
       JWT_SERVER: http://jwt_service:8002/auth
     ports:
       - "8001:8000"
 
-
   
 volumes:
   redis_data:
-    driver: local
+    # driver: local
   mysql_data:
-    driver: local
+    # driver: local
