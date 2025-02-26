@@ -69,7 +69,7 @@ services:
       MYSQL_PORT: 3306
       JWT_SERVER: http://jwt_service:8002/auth
     ports:
-      - "8001:8000"
+      - "8001:8001"
 
   
 volumes:
