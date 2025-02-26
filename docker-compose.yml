@@ -41,6 +41,7 @@ services:
     environment:
       FLASK_ENV: development
       JWT_SERVER: http://jwt_service:8002/auth/validate
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
 
     restart: always
 
