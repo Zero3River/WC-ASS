@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-management
+  namespace: url-shortener
+spec:
+  ports:
+    - port: 8001
+      targetPort: 8001
+  selector:
+    app: user-management
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-management
+  namespace: url-shortener
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-management
+  template:
+    metadata:
+      labels:
+        app: user-management
+    spec:
+      containers:
+        - name: user-management
+          image: docker.io/library/wc-ass-user_management:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8001
+          # envFrom:
+          #   - secretRef:
+          #       name: app-secrets
+          env:
+            - name: MYSQL_HOST
+              value: "mysql-cluster"
+            - name: MYSQL_PORT
+              value: "3306"
+            - name: JWT_SERVER
+              value: "http://jwt-service:8002/auth"
+            - name: MYSQL_USER 
+              value: root
+            - name: MYSQL_ROOT_PASSWORD
+              value: sakila
+            - name: MYSQL_PASSWORD
+              value: sakila
+            - name: MYSQL_DB
+              value: users

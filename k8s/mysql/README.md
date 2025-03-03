@@ -37,7 +37,10 @@ kubectl apply -f k8s/mysql/deploy-db.yaml
 Optionally observe the process by watching the innodbcluster type for the default namespace:
 
 ```bash
-kubectl get innodbcluster --watch
+kubectl get innodbcluster  -n url-shortener --watch
+# 也可以看看这个
+kubectl get pods -n url-shortener
+
 ```
 Output looks similar to this:
 
@@ -54,7 +57,7 @@ mycluster   ONLINE   3        3           1         2m6s
 To demonstrate, this example connects with MySQL Shell to show the host name:
 
 ```bash
-kubectl run --rm -it myshell --image=container-registry.oracle.com/mysql/community-operator -- mysqlsh root@mysql-cluster --sql
+kubectl run --rm -it myshell -n url-shortener  --image=container-registry.oracle.com/mysql/community-operator -- mysqlsh root@mysql-cluster --sql
 ```
 
 密码是mysql-secret里的sakila
