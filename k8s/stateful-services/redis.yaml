@@ -1,0 +1,190 @@
+# 1. ConfigMap - Redis Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+data:
+  redis.conf: |
+    bind 0.0.0.0
+    protected-mode no
+    appendonly yes
+    dir /data
+
+---
+# 2. Secret - Store Redis Password Securely
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secret
+type: Opaque
+data:
+  REDIS_PASSWORD: { { REDIS_PASSWORD_BASE64 } }
+
+---
+# 3. Persistent Volume for Redis Master
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-master-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/mnt/data/redis-master"
+
+---
+# 4. Persistent Volume Claim for Redis Master
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-master-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: redis-master-pv
+
+---
+# 5. Redis Master Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+      role: master
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: master
+    spec:
+      containers:
+        - name: redis
+          image: redis/redis-stack:latest
+          env:
+            - name: REDIS_ARGS
+              value: "--requirepass $(REDIS_PASSWORD)"
+          envFrom:
+            - secretRef:
+                name: redis-secret
+          volumeMounts:
+            - name: redis-config
+              mountPath: /etc/redis
+            - name: redis-data
+              mountPath: /data
+          command: ["redis-server", "/etc/redis/redis.conf"]
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-config
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-master-pvc
+
+---
+# 6. Redis Master Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+spec:
+  ports:
+    - port: 6379
+      targetPort: 6379
+  selector:
+    app: redis
+    role: master
+
+---
+# 7. Persistent Volume for Redis Replicas
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-replica-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: "/mnt/data/redis-replica"
+
+---
+# 8. Persistent Volume Claim for Redis Replicas
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-replica-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: redis-replica-pv
+
+---
+# 9. Redis Replica StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-replica
+spec:
+  serviceName: redis-replica
+  replicas: 2 # Number of replicas
+  selector:
+    matchLabels:
+      app: redis
+      role: replica
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: replica
+    spec:
+      containers:
+        - name: redis
+          image: redis/redis-stack:latest
+          env:
+            - name: REDIS_ARGS
+              value: "--requirepass $(REDIS_PASSWORD) --replicaof redis-master 6379"
+          envFrom:
+            - secretRef:
+                name: redis-secret
+          volumeMounts:
+            - name: redis-config
+              mountPath: /etc/redis
+            - name: redis-data
+              mountPath: /data
+          command: ["redis-server", "/etc/redis/redis.conf"]
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-config
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-replica-pvc
+
+---
+# 10. Redis Replica Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-replica
+spec:
+  ports:
+    - port: 6379
+      targetPort: 6379
+  selector:
+    app: redis
+    role: replica
