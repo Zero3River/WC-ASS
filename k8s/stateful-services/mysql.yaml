@@ -1,0 +1,150 @@
+# 2️⃣ 配置 ConfigMap，存储 MySQL Master & Slave 配置
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  namespace: url-shortener
+data:
+  master.cnf: |
+    [mysqld]
+    server-id=1
+    log-bin=mysql-bin
+    binlog-format=row
+    max_binlog_size=100M
+    expire_logs_days=10
+    sync-binlog=1
+    skip-name-resolve
+  slave.cnf: |
+    [mysqld]
+    server-id=${POD_ORDINAL}
+    relay-log=mysql-relay-bin
+    log-slave-updates=1
+    read-only=1
+    skip-name-resolve
+---
+# # 3️⃣ 存储 MySQL 密码的 Secret
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: mysql-secret
+#   namespace: url-shortener
+# type: Opaque
+# data:
+#   MYSQL_ROOT_PASSWORD: cGFzc3dvcmQ=  # "password" base64 编码
+#   MYSQL_REPL_USER: cmVwbGljYQ==      # "replica" base64 编码
+#   MYSQL_REPL_PASSWORD: cmVwbGljYV9wYXNz  # "replica_pass" base64 编码
+# ---
+# 4️⃣ Headless Service，允许 StatefulSet 发现主从节点
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: url-shortener
+spec:
+  clusterIP: None  # Headless Service
+  selector:
+    app: mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+---
+# 5️⃣ StatefulSet 定义（Master & Slave）
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: url-shortener
+spec:
+  serviceName: "mysql"
+  replicas: 3  # 1 Master + 2 Slaves
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mysql
+        image: mysql:5.7
+        ports:
+        - containerPort: 3306
+        # env:
+        # - name: MYSQL_ROOT_PASSWORD
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: mysql-secret
+        #       key: MYSQL_ROOT_PASSWORD
+        # - name: MYSQL_REPL_USER
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: mysql-secret
+        #       key: MYSQL_REPL_USER
+        # - name: MYSQL_REPL_PASSWORD
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: mysql-secret
+        #       key: MYSQL_REPL_PASSWORD
+        env:
+        - name: POD_ORDINAL
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_REPL_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_REPL_USER
+        - name: MYSQL_REPL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: MYSQL_REPL_PASSWORD
+
+        volumeMounts:
+        - name: mysql-data
+          mountPath: /var/lib/mysql
+        - name: config-volume
+          mountPath: /etc/mysql/conf.d
+      volumes:
+      - name: config-volume
+        configMap:
+          name: mysql-config
+  volumeClaimTemplates:
+  - metadata:
+      name: mysql-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+---
+# 6️⃣ 网络策略，确保只有应用可以访问 MySQL
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: mysql-network-policy
+  namespace: url-shortener
+spec:
+  podSelector:
+    matchLabels:
+      app: mysql
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          role: backend
+    ports:
+    - protocol: TCP
+      port: 3306

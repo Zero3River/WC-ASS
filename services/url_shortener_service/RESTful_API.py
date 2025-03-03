@@ -7,7 +7,7 @@ import os
 
 app = Flask(__name__)
 
-user_url_data = redis.StrictRedis(host='redis',port=6379, db=0, decode_responses=True, password=os.getenv('REDIS_PASSWORD', "redis")) # change the ip later
+user_url_data = redis.StrictRedis(host='redis',port=6379, db=0, decode_responses=True, password=os.getenv('REDIS_PASSWORD')) # change the ip later
 
 # JWT Authentication, get username from JWT token
 def jwt_auth_user(headers):
