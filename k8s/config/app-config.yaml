@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  # MySQL
+  MYSQL_HOST: "mysql-cluster"
+  MYSQL_PORT: "3306"
+  USER_MYSQL_DB: users
+
+  # Redis
+  REDIS_HOST: "http://redis-cluster-service"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+
+  # APP
+  JWT_SERVER: "http://jwt-service:8002/auth"
+  TOKEN_EXPIRATION: "30" # 30 minutes
+  

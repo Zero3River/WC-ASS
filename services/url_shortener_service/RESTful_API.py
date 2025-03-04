@@ -7,12 +7,19 @@ import os
 
 app = Flask(__name__)
 
-user_url_data = redis.StrictRedis(host='redis',port=6379, db=0, decode_responses=True, password=os.getenv('REDIS_PASSWORD')) # change the ip later
+# Global variables
+REDIS_HOST = os.getenv('REDIS_HOST')
+REDIS_PORT = os.getenv('REDIS_PORT')
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
+REDIS_DB = os.getenv('REDIS_DB')
+JWT_SERVER = os.getenv('JWT_SERVER')
+
+user_url_data = redis.StrictRedis(host=REDIS_HOST,port=REDIS_PORT, db=REDIS_DB, decode_responses=True, password=REDIS_PASSWORD)
 
 # JWT Authentication, get username from JWT token
 def jwt_auth_user(headers):
-    jwt_server = os.getenv('JWT_SERVER')
-    response = requests.post(url=jwt_server, headers=headers)
+    jwt_server = JWT_SERVER
+    response = requests.post(url=jwt_server+"/validate", headers=headers)
     if response.status_code != 200:
         return None  # Authentication failed
     
