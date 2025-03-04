@@ -24,3 +24,10 @@ spec:
             name: jwt
             port:
               number: 8002
+      - path: /users
+        pathType: Prefix
+        backend:
+          service:
+            name: user-management
+            port:
+              number: 8001

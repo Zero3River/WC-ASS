@@ -16,6 +16,9 @@ kubectl apply -f mysql/deploy-operator.yaml
 
 # Wait for operator services to be ready
 echo "Waiting for stateful services to start..."
+
+<!--use this check progress-->
+kubectl get all -n mysql-operator 
 <!-- kubectl wait --for=condition=ready deployment.apps/mysql-operator -n mysql-operator --timeout=120s -->
 
 kubectl apply -f config/mysql-secrets.yaml
@@ -25,7 +28,6 @@ kubectl apply -f mysql/deploy-db.yaml
 # Wait for MySQL to be ready
 echo "Waiting for MySQL to start..."
 
-<!-- kubectl wait --for=condition=ready innodbcluster --all -n url-shortener --timeout=600s -->
 
 
 
