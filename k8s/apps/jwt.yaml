@@ -40,19 +40,19 @@ spec:
 
             - name: REDIS_HOST
               valueFrom:
-                configMapRef:
+                configMapKeyRef:
                   name: app-config
                   key: REDIS_HOST
 
             - name: REDIS_PORT
               valueFrom:
-                configMapRef:
+                configMapKeyRef:
                   name: app-config
                   key: REDIS_PORT
 
             - name: REDIS_DB
               valueFrom:
-                configMapRef:
+                configMapKeyRef:
                   name: app-config
                   key: REDIS_DB
             
@@ -60,7 +60,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: app-secrets
-                  kye: JWT_SECRET_KEY
+                  key: JWT_SECRET_KEY
 
 ...
 ---

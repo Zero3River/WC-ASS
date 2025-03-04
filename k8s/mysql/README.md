@@ -57,7 +57,7 @@ mycluster   ONLINE   3        3           1         2m6s
 To demonstrate, this example connects with MySQL Shell to show the host name:
 
 ```bash
-kubectl run --rm -it myshell -n url-shortener  --image=container-registry.oracle.com/mysql/community-operator -- mysqlsh root@mysql-cluster --sql
+kubectl run --rm -it myshell -n url-shortener  --image=container-registry.oracle.com/mysql/community-operator -- mysqlsh root:$PASSWORD@mysql-cluster --sql
 ```
 
 密码是mysql-secret里的sakila
@@ -67,7 +67,7 @@ kubectl run --rm -it myshell -n url-shortener  --image=container-registry.oracle
 If you don't see a command prompt, try pressing enter.
 ******
 
-MySQL mycluster SQL> SELECT @@hostname
+MySQL mycluster SQL> SELECT @@hostname;
 
 +-------------+
 | @@hostname  |
