@@ -3,3 +3,4 @@
 3. update deploy.sh
 4. change usermanagement yaml to use config file
 5. push image to registry
+6. remember to turn on ingress addon 

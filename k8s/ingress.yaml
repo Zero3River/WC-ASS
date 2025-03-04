@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: url-shortener-ingress
+  namespace: url-shortener
+  # annotations:
+  #   nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: wcassurl.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: url-shortener
+            port:
+              number: 8000
+      - path: /auth
+        pathType: Prefix
+        backend:
+          service:
+            name: jwt
+            port:
+              number: 8002
