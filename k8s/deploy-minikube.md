@@ -13,8 +13,9 @@ kubectl apply -f config/ -n url-shortener
 
 kubectl apply -f mysql/deploy-single.yaml -n url-shortener
 
-kubectl run -it --rm --image=mysql:5.6 --restart=Never mysql-client -- mysql -h mysql -p sakila 
+kubectl run -n url-shortener -it --rm --image=mysql:5.6 --restart=Never mysql-client -- mysql -h mysql -psakila 
 
+kubectl get all -n url-shortener
 
 # MySQL cluster
 
@@ -71,4 +72,18 @@ url-shortener-ingress   nginx   wcassurl.com   192.168.49.2   80      43s
 # For macos
 
 sudo nano /private/etc/hosts
+
+
+# test create user
+
+curl -v -X POST http://wcassurl.com:31532/users   -H "Content-Type: application/json"   -d '{
+    "username": "username",
+    "password": "password"
+  }'
+
+# test login user
+curl -v -X POST http://wcassurl.com:31532/users/login   -H "Content-Type: application/json"   -d '{
+    "username": "username",
+    "password": "password"
+  }'
 

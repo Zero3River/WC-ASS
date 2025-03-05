@@ -6,6 +6,7 @@ metadata:
   # annotations:
   #   nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: nginx
   rules:
   - host: wcassurl.com
     http:
@@ -14,7 +15,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: url-shortener
+            name: url
             port:
               number: 8000
       - path: /auth
