@@ -9,7 +9,15 @@ kubectl apply -f namespace.yaml
 # Apply configmaps and secrets first
 kubectl apply -f config/ -n url-shortener
 
-# MySQL
+# MYSQL single
+
+kubectl apply -f mysql/deploy-single.yaml -n url-shortener
+
+kubectl run -it --rm --image=mysql:5.6 --restart=Never mysql-client -- mysql -h mysql -p sakila 
+
+
+# MySQL cluster
+
 kubectl apply -f mysql/deploy-crds.yaml -n url-shortener
 
 kubectl apply -f mysql/deploy-operator.yaml

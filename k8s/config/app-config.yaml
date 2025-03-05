@@ -4,7 +4,7 @@ metadata:
   name: app-config
 data:
   # MySQL
-  MYSQL_HOST: "mysql-cluster"
+  MYSQL_HOST: "mysql"
   MYSQL_PORT: "3306"
   USER_MYSQL_DB: users
 
