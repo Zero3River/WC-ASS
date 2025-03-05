@@ -63,6 +63,7 @@ def updateURL(id):
 
     if not url or not checkURLValidity(url):
         return jsonify({"error": "Invalid URL"}), 400
+    
     elif username != stored_username:
         return jsonify({"error": "Forbidden"}), 403
     
@@ -89,6 +90,7 @@ def deleteURL(id):
         return jsonify({"error": "Forbidden"}), 403
 
     user_url_data.delete(id)
+    user_url_data.srem(username, id)
     return Response(status=204)
 
 @app.route('/', methods=['GET'])
