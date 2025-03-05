@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: jwt
-          image: docker.io/library/wc-ass-jwt:latest
+          image: zero3river/wc-ass:jwt
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8002

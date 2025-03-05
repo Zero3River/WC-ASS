@@ -27,30 +27,49 @@ spec:
     spec:
       containers:
         - name: user-management
-          image: docker.io/library/wc-ass-user_management:latest
-          # TODO: I'm not sure if the image is correct?
+          image: zero3river/wc-ass:user_management
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8001
           # envFrom:
           #   - secretRef:
           #       name: app-secrets
-          # TODO Switch to the configmap and secrets
           env:
             - name: MYSQL_HOST
-              value: "mysql-cluster"
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: MYSQL_HOST
             - name: MYSQL_PORT
-              value: "3306"
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: MYSQL_PORT
             - name: JWT_SERVER
-              value: "http://jwt-service:8002/auth"
-            - name: MYSQL_USER 
-              value: root
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: JWT_SERVER
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: rootUser
             - name: MYSQL_ROOT_PASSWORD
-              value: sakila
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: rootPassword
             - name: MYSQL_PASSWORD
-              value: sakila
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pass
+                  key: password
             - name: MYSQL_DB
-              value: users
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: USER_MYSQL_DB
 
 ...
 ---

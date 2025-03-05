@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: url
-          image: docker.io/library/wc-ass-url:latest
+          image: zero3river/wc-ass:url
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
