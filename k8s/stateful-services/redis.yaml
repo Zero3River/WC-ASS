@@ -3,6 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-config
+  namespace: url-shortener
 data:
   redis.conf: |
     bind 0.0.0.0
@@ -21,35 +22,35 @@ data:
   REDIS_PASSWORD: cmVkaXM= # Base64 for "redis"
 
 ---
-# # 3. Persistent Volume for Redis Master
-# apiVersion: v1
-# kind: PersistentVolume
-# metadata:
-#   name: redis-master-pv
-# spec:
-#   capacity:
-#     storage: 1Gi
-#   accessModes:
-#     - ReadWriteOnce
-#   persistentVolumeReclaimPolicy: Retain
-#   storageClassName: standard
-#   hostPath:
-#     path: "/mnt/data/redis-master"
+# 3. Persistent Volume for Redis Master
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redis-master-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: standard
+  hostPath:
+    path: "/mnt/data/redis-master"
 
-# ---
-# # 4. Persistent Volume Claim for Redis Master
-# apiVersion: v1
-# kind: PersistentVolumeClaim
-# metadata:
-#   name: redis-master-pvc
-# spec:
-#   accessModes:
-#     - ReadWriteOnce
-#   resources:
-#     requests:
-#       storage: 1Gi
-#   volumeName: redis-master-pv
-#   storageClassName: standard
+---
+# 4. Persistent Volume Claim for Redis Master
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-master-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  volumeName: redis-master-pv
+  storageClassName: standard
 
 ---
 
@@ -96,14 +97,9 @@ spec:
         - name: redis-config
           configMap:
             name: redis-config
-  volumeClaimTemplates:
-    - metadata:
-        name: redis-data
-      spec:
-        accessModes: ["ReadWriteOnce"]
-        resources:
-          requests:
-            storage: 1Gi
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-master-pvc
 
 ---
 # 6. Redis Master Service
