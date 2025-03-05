@@ -54,11 +54,11 @@ def updateURL(id):
         return jsonify({"error": "Forbidden"}), 403
     
     url_info = user_url_data.hgetall(id)
-    stored_username = url_info.get('username')
-    
-    if url_info is None:
+
+    if url_info == {}:
         return jsonify({"error": "ID not found"}), 404
 
+    stored_username = url_info.get('username')
     url = request.get_json(force=True).get('url')
 
     if not url or not checkURLValidity(url):
@@ -81,7 +81,7 @@ def deleteURL(id):
     
     urlinfo = user_url_data.hgetall(id)
     
-    if urlinfo is None:
+    if urlinfo == {}:
         return jsonify({"error": "ID not found"}), 404
 
     stored_username = urlinfo.get('username')
@@ -97,10 +97,11 @@ def deleteURL(id):
 def getURLs():
     headers = request.headers
     username = jwt_auth_user(headers)
-    user_urls = user_url_data.smembers(username)
     
     if username is None:
         return jsonify({"error": "Forbidden"}), 403
+    
+    user_urls = user_url_data.smembers(username)
 
     return jsonify({"keys": [element for element in user_urls]}), 200
 
