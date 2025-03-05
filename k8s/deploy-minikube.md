@@ -10,7 +10,7 @@ kubectl apply -f namespace.yaml
 kubectl apply -f config/ -n url-shortener
 
 # MySQL
-kubectl apply -f mysql/deploy-crds.yaml
+kubectl apply -f mysql/deploy-crds.yaml -n url-shortener
 
 kubectl apply -f mysql/deploy-operator.yaml
 
@@ -21,9 +21,9 @@ echo "Waiting for stateful services to start..."
 kubectl get all -n mysql-operator 
 <!-- kubectl wait --for=condition=ready deployment.apps/mysql-operator -n mysql-operator --timeout=120s -->
 
-kubectl apply -f config/mysql-secrets.yaml
+kubectl apply -f config/mysql-secrets.yaml -n url-shortener
 
-kubectl apply -f mysql/deploy-db.yaml
+kubectl apply -f mysql/deploy-db.yaml -n url-shortener
 
 # Wait for MySQL to be ready
 echo "Waiting for MySQL to start..."
