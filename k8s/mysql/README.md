@@ -26,9 +26,7 @@ kubectl get deployment mysql-operator --namespace mysql-operator
 kubectl apply -f k8s/config/mysql-secrets.yaml
 ```
 
-
 Use that newly created user to configure a new MySQL InnoDB Cluster. This example's InnoDBCluster definition creates three MySQL server instances and one MySQL Router instance:
-
 
 ```bash
 kubectl apply -f k8s/mysql/deploy-db.yaml
@@ -38,10 +36,11 @@ Optionally observe the process by watching the innodbcluster type for the defaul
 
 ```bash
 kubectl get innodbcluster  -n url-shortener --watch
-# 也可以看看这个
+
 kubectl get pods -n url-shortener
 
 ```
+
 Output looks similar to this:
 
 ```bash
@@ -60,9 +59,10 @@ To demonstrate, this example connects with MySQL Shell to show the host name:
 kubectl run --rm -it myshell -n url-shortener  --image=container-registry.oracle.com/mysql/community-operator -- mysqlsh root:$PASSWORD@mysql-cluster --sql
 ```
 
-密码是mysql-secret里的sakila
+密码是 mysql-secret 里的 sakila
 
 **output**
+
 ```bash
 If you don't see a command prompt, try pressing enter.
 ******
@@ -76,5 +76,3 @@ MySQL mycluster SQL> SELECT @@hostname;
 +-------------+
 
 ```
-
-退出是`\q`

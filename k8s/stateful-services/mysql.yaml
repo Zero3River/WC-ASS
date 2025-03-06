@@ -1,4 +1,4 @@
-# 2️⃣ 配置 ConfigMap，存储 MySQL Master & Slave 配置
+#Configure ConfigMap to store MySQL Master & Slave configurations
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -22,7 +22,7 @@ data:
     read-only=1
     skip-name-resolve
 ---
-# # 3️⃣ 存储 MySQL 密码的 Secret
+# store MySQL credentials in a Secret
 # apiVersion: v1
 # kind: Secret
 # metadata:
@@ -30,18 +30,18 @@ data:
 #   namespace: url-shortener
 # type: Opaque
 # data:
-#   MYSQL_ROOT_PASSWORD: cGFzc3dvcmQ=  # "password" base64 编码
-#   MYSQL_REPL_USER: cmVwbGljYQ==      # "replica" base64 编码
-#   MYSQL_REPL_PASSWORD: cmVwbGljYV9wYXNz  # "replica_pass" base64 编码
+#   MYSQL_ROOT_PASSWORD: cGFzc3dvcmQ=
+#   MYSQL_REPL_USER: cmVwbGljYQ==
+#   MYSQL_REPL_PASSWORD: cmVwbGljYV9wYXNz
 # ---
-# 4️⃣ Headless Service，允许 StatefulSet 发现主从节点
+# Headless Service, allowing StatefulSet to discover Master & Slave nodes
 apiVersion: v1
 kind: Service
 metadata:
   name: mysql
   namespace: url-shortener
 spec:
-  clusterIP: None  # Headless Service
+  clusterIP: None # Headless Service
   selector:
     app: mysql
   ports:
@@ -57,7 +57,7 @@ metadata:
   namespace: url-shortener
 spec:
   serviceName: "mysql"
-  replicas: 3  # 1 Master + 2 Slaves
+  replicas: 3 # 1 Master + 2 Slaves
   selector:
     matchLabels:
       app: mysql
@@ -68,67 +68,67 @@ spec:
     spec:
       terminationGracePeriodSeconds: 10
       containers:
-      - name: mysql
-        image: mysql:5.7
-        ports:
-        - containerPort: 3306
-        # env:
-        # - name: MYSQL_ROOT_PASSWORD
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: mysql-secret
-        #       key: MYSQL_ROOT_PASSWORD
-        # - name: MYSQL_REPL_USER
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: mysql-secret
-        #       key: MYSQL_REPL_USER
-        # - name: MYSQL_REPL_PASSWORD
-        #   valueFrom:
-        #     secretKeyRef:
-        #       name: mysql-secret
-        #       key: MYSQL_REPL_PASSWORD
-        env:
-        - name: POD_ORDINAL
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+        - name: mysql
+          image: mysql:5.7
+          ports:
+            - containerPort: 3306
+          # env:
+          # - name: MYSQL_ROOT_PASSWORD
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: mysql-secret
+          #       key: MYSQL_ROOT_PASSWORD
+          # - name: MYSQL_REPL_USER
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: mysql-secret
+          #       key: MYSQL_REPL_USER
+          # - name: MYSQL_REPL_PASSWORD
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: mysql-secret
+          #       key: MYSQL_REPL_PASSWORD
+          env:
+            - name: POD_ORDINAL
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
 
-        - name: MYSQL_ROOT_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: MYSQL_ROOT_PASSWORD
-        - name: MYSQL_REPL_USER
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: MYSQL_REPL_USER
-        - name: MYSQL_REPL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: mysql-secret
-              key: MYSQL_REPL_PASSWORD
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_REPL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_REPL_USER
+            - name: MYSQL_REPL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_REPL_PASSWORD
 
-        volumeMounts:
-        - name: mysql-data
-          mountPath: /var/lib/mysql
-        - name: config-volume
-          mountPath: /etc/mysql/conf.d
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            - name: config-volume
+              mountPath: /etc/mysql/conf.d
       volumes:
-      - name: config-volume
-        configMap:
-          name: mysql-config
+        - name: config-volume
+          configMap:
+            name: mysql-config
   volumeClaimTemplates:
-  - metadata:
-      name: mysql-data
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      resources:
-        requests:
-          storage: 10Gi
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
 ---
-# 6️⃣ 网络策略，确保只有应用可以访问 MySQL
+# MySQL NetworkPolicy, allowing only the application to access MySQL
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -139,12 +139,12 @@ spec:
     matchLabels:
       app: mysql
   policyTypes:
-  - Ingress
+    - Ingress
   ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          role: backend
-    ports:
-    - protocol: TCP
-      port: 3306
+    - from:
+        - podSelector:
+            matchLabels:
+              role: backend
+      ports:
+        - protocol: TCP
+          port: 3306
